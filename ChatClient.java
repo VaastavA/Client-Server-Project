@@ -2,7 +2,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-
+//test
 final class ChatClient {
     private ObjectInputStream sInput;
     private ObjectOutputStream sOutput;
@@ -94,6 +94,8 @@ final class ChatClient {
      */
     public static void main(String[] args) {
         // Get proper arguments and override defaults
+	Scanner s = new Scanner(System.in);
+	String[] input = s.nextLine().split(" ");
 
         // Create your client and start it
         ChatClient client = new ChatClient("localhost", 1500, "CS 180 Student");
