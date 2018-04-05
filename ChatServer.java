@@ -169,6 +169,7 @@ final class ChatServer {
         @Override
         public void run() {
             // Read the username sent to you by client
+	    // Type read implementation goes here
             try {
                 cm = (ChatMessage) sInput.readObject();
             } catch (IOException | ClassNotFoundException e) {
