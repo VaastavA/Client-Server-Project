@@ -135,6 +135,36 @@ final class ChatClient {
         }
         client = new ChatClient(server,port,username);
         client.start();
+        Scanner s = new Scanner(System.in);
+        while (s.hasNextLine())
+        {
+            String input = s.nextLine();
+            if(input.startsWith("/"))
+            {
+                if(input.startsWith("/logout"))
+                {
+                    client.sendMessage(new ChatMessage(1,"",""));
+                }
+                else if(input.startsWith("/msg"))
+                {
+                    String[] inputer = input.split(" ",3);
+                    client.sendMessage(new ChatMessage(2,inputer[2],inputer[1]));
+                }
+                else if(input.startsWith("/list"))
+                {
+                    client.sendMessage(new ChatMessage(3,"",""));
+                }
+                else if (input.startsWith("/ttt"))
+                {
+                    String[] inputer = input.split(" ",2);
+                    client.sendMessage(new ChatMessage(4,"",inputer[1]));
+                }
+            }
+            else
+            {
+                client.sendMessage(new ChatMessage(0,input,""));
+            }
+        }
 
 
         // Create your client and start it

@@ -73,7 +73,7 @@ final class ChatServer {
             synchronized (lock2) {
                 if (i.getId() == id) {
                     clients.remove(i);
-                    //i.stop();
+                    i.close();
                     System.out.println(i.username+" has been removed");
                 }
             }
@@ -191,6 +191,7 @@ final class ChatServer {
             } else {
                 try {
                     sOutput.writeObject(msg);
+                    sOutput.flush();
                 } catch (IOException io) {
                     io.printStackTrace();
                 }
@@ -211,6 +212,14 @@ final class ChatServer {
 
         public int getId() {
             return id;
+        }
+        private void close() {
+            try {
+                if (sOutput != null) sOutput.close();
+                if (sInput != null) sInput.close();
+                if (socket != null) socket.close();
+            } catch (IOException ieo) {
+            }
         }
     }
 }
