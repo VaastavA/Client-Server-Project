@@ -19,6 +19,17 @@ final class ChatClient {
      * @param username - the username of the user connecting
      */
     private ChatClient(String server, int port, String username) {
+        try
+        {
+            if (username == null)
+            {
+                throw new IllegalArgumentException("Username is null?");
+            }
+        }
+        catch (IllegalArgumentException iae)
+        {
+            System.out.println(iae.getMessage());
+        }
         this.server = server;
         this.port = port;
         this.username = username;
@@ -32,8 +43,9 @@ final class ChatClient {
         // Create a socket
         try {
             socket = new Socket(server, port);
+            System.out.println("Connected: " + socket);
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Client could not be started. Server probably not running right now.");
             return false;
         }
 
@@ -95,52 +107,39 @@ final class ChatClient {
      */
     public static void main(String[] args) {
         // Get proper arguments and override defaults
-        Scanner s = new Scanner(System.in);
-        String  input = s.nextLine();
-        ChatClient client=null;
-        if (input!=null)
+        ChatClient client = null;
+        String server = "localhost";
+        String username = null;
+        int port = 1500;
+        if (args.length < 1)
         {
-            String[] inputer = input.split(" ");
-            if(inputer[0]!=null && inputer[0].equals("java") && inputer[1].equals("ChatClient"))
+            System.out.println("Need more ARGS");
+        }
+        if(args.length>0 && args[0]!=null)
+        {
+            username = args[0];
+        }
+        if(args.length>1 && args[1]!=null)
+        {
+            try {
+                port = Integer.parseInt(args[1]);
+            }
+            catch (NumberFormatException nfe)
             {
-                if(inputer.length==3)
-                {
-                    client = new ChatClient("localhost", 1500, inputer[2]);
-                }
-                if(inputer.length==4)
-                {
-                    int porter = Integer.parseInt(inputer[3]);
-                     client = new ChatClient("localhost", porter, inputer[2]);
-                }
-                if(inputer.length==5)
-                {
-                    int porter = Integer.parseInt(inputer[3]);
-                    client = new ChatClient(inputer[4], porter, inputer[2]);
-                }
+                System.out.println("Argument entered is not an intger for port number");
             }
         }
+        if(args.length>2 && args[2]!=null)
+        {
+            server = args[2];
+        }
+        client = new ChatClient(server,port,username);
         client.start();
-        while (s.hasNextLine()) {
-            String message = s.nextLine();
-            if (message.equalsIgnoreCase("/logout")) ;
-            {
-                try {
-                    client.sInput.close();
-                    client.sOutput.close();
-                } catch (IOException ioe) {
-                    System.out.println("IO exp in Cient");
-                }
-                return;
-            }
-            client.sendMessage(new ChatMessage(message));
-        }
-
 
 
         // Create your client and start it
 
         // Send an empty message to the server
-        client.sendMessage(new ChatMessage());
     }
 
 
@@ -152,7 +151,7 @@ final class ChatClient {
     private final class ListenFromServer implements Runnable {
         public void run() {
             try {
-                while (sInput != null) {
+                while (true) {
                     String msg = (String) sInput.readObject();
                     System.out.print(msg);
                 }

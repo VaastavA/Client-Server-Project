@@ -1,3 +1,5 @@
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -5,6 +7,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
@@ -12,11 +15,15 @@ final class ChatServer {
     private static int uniqueId = 0;
     // Data structure to hold all of the connected clients
     private final List<ClientThread> clients = new ArrayList<>();
-    private final int port;			// port the server is hosted on
+    private final int port;            // port the server is hosted on
     private final Object lock1 = new Object();
+    private final Object lock2 = new Object();
+    private  Date date = new Date();
+    private String dateFormat = new SimpleDateFormat("HH:mm:ss").format(date)+" ";
 
     /**
      * ChatServer constructor
+     *
      * @param port - the port the server is being hosted on
      */
     private ChatServer(int port) {
@@ -30,35 +37,70 @@ final class ChatServer {
     private void start() {
         try {
 
-                ServerSocket serverSocket = new ServerSocket(port);
+            ServerSocket serverSocket = new ServerSocket(port);
+            System.out.println( dateFormat+ "Server waiting for client on port " + port+".");
             while (true) {
                 Socket socket = serverSocket.accept();
                 Runnable r = new ClientThread(socket, uniqueId++);
                 Thread t = new Thread(r);
+                System.out.println(dateFormat+((ClientThread) r).username+" has connected.");
+                if(this.alreadyExists(((ClientThread) r).username))
+                {
+                    System.out.println("Client with username already exists. Disconnecting client.");
+                    ((ClientThread) r).writeMessage("Sorry, username already exists.");
+                    this.remove(((ClientThread) r).getId());
+                }
                 clients.add((ClientThread) r);
                 t.start();
+
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    private void broadcast(String message)
+
+    private void broadcast(String message) {
+        for (ClientThread i : clients) {
+            synchronized (lock1) {
+                i.writeMessage(dateFormat+ message);
+            }
+        }
+        System.out.println(dateFormat+ message);
+    }
+
+    private void remove(int id) {
+        for (ClientThread i : clients) {
+            synchronized (lock2) {
+                if (i.getId() == id) {
+                    clients.remove(i);
+                    //i.stop();
+                    System.out.println(i.username+" has been removed");
+                }
+            }
+        }
+    }
+    private boolean alreadyExists(String username)
     {
         for(ClientThread i : clients)
         {
-            synchronized (lock1)
+            if(i.username.equals(username))
             {
-                i.writeMessage(message+new SimpleDateFormat( "HH:mm:ss"));
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
-        System.out.println(message+new SimpleDateFormat( "HH:mm:ss"));
+        return false;
     }
 
     /**
-     *	Sample code to use as a reference for Tic Tac Toe
-     *
+     * Sample code to use as a reference for Tic Tac Toe
+     * <p>
      * directMessage - sends a message to a specific username, if connected
-     * @param message - the string to be sent
+     *
+     * @param message  - the string to be sent
      * @param username - the user the message will be sent to
      */
     /*private synchronized void directMessage(String message, String username) {
@@ -80,22 +122,16 @@ final class ChatServer {
      *  If the port number is not specified 1500 is used
      */
     public static void main(String[] args) {
-        Scanner ser = new Scanner(System.in);
-        String serverInput = ser.nextLine();
-        ChatServer server=null;
-        if (serverInput != null) {
-            String[] inputer = serverInput.split(" ");
-            if (inputer[0] != null && inputer[0].equals("java") && inputer[1].equals("ChatServer")) {
-                if (inputer.length == 2) {
-                    server = new ChatServer(1500);
-                }
-                if (inputer.length == 3) {
-                    int porter = Integer.parseInt(inputer[2]);
-                    server = new ChatServer(porter);
-                }
-            }
+       ChatServer server = null;
+        if (args.length < 1) {
+            System.out.println("No port number");
         }
-        server.start();
+        else {
+            server = new ChatServer(Integer.parseInt(args[0]));
+            server.start();
+        }
+
+
     }
 
 
@@ -148,23 +184,33 @@ final class ChatServer {
                 e.printStackTrace();
             }
         }
-        private boolean writeMessage(String msg)
-        {
-            if(socket==null)
-            {
+
+        private boolean writeMessage(String msg) {
+            if (socket == null) {
                 return false;
-            }
-            else
-            {
+            } else {
                 try {
                     sOutput.writeObject(msg);
-                }
-                catch (IOException io)
-                {
+                } catch (IOException io) {
                     io.printStackTrace();
                 }
                 return true;
             }
+        }
+        private ChatMessage readMessage()
+        {
+            try {
+                return (ChatMessage) sInput.readObject();
+            }
+            catch (IOException | ClassNotFoundException ioe)
+            {
+               ioe.printStackTrace();
+            }
+            return null;
+        }
+
+        public int getId() {
+            return id;
         }
     }
 }
