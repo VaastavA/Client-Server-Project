@@ -1,6 +1,6 @@
 # Client-Server-Project
 Group 22
-Chat Client Args left
-Server Arfs left
-Input parsing left
+message sending left(void run)
+logout and void close left
+TTT integration left
 TTTGame breakers : shouldnt be able to make a move at the same box again
