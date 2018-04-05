@@ -3,14 +3,17 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 
 final class ChatServer {
     private static int uniqueId = 0;
     // Data structure to hold all of the connected clients
     private final List<ClientThread> clients = new ArrayList<>();
     private final int port;			// port the server is hosted on
+    private final Object lock1 = new Object();
 
     /**
      * ChatServer constructor
@@ -26,15 +29,29 @@ final class ChatServer {
      */
     private void start() {
         try {
-            ServerSocket serverSocket = new ServerSocket(port);
-            Socket socket = serverSocket.accept();
-            Runnable r = new ClientThread(socket, uniqueId++);
-            Thread t = new Thread(r);
-            clients.add((ClientThread) r);
-            t.start();
+
+                ServerSocket serverSocket = new ServerSocket(port);
+            while (true) {
+                Socket socket = serverSocket.accept();
+                Runnable r = new ClientThread(socket, uniqueId++);
+                Thread t = new Thread(r);
+                clients.add((ClientThread) r);
+                t.start();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    private void broadcast(String message)
+    {
+        for(ClientThread i : clients)
+        {
+            synchronized (lock1)
+            {
+                i.writeMessage(message+new SimpleDateFormat( "HH:mm:ss"));
+            }
+        }
+        System.out.println(message+new SimpleDateFormat( "HH:mm:ss"));
     }
 
     /**
@@ -63,7 +80,21 @@ final class ChatServer {
      *  If the port number is not specified 1500 is used
      */
     public static void main(String[] args) {
-        ChatServer server = new ChatServer(1500);
+        Scanner ser = new Scanner(System.in);
+        String serverInput = ser.nextLine();
+        ChatServer server=null;
+        if (serverInput != null) {
+            String[] inputer = serverInput.split(" ");
+            if (inputer[0] != null && inputer[0].equals("java") && inputer[1].equals("ChatServer")) {
+                if (inputer.length == 2) {
+                    server = new ChatServer(1500);
+                }
+                if (inputer.length == 3) {
+                    int porter = Integer.parseInt(inputer[2]);
+                    server = new ChatServer(porter);
+                }
+            }
+        }
         server.start();
     }
 
@@ -115,6 +146,24 @@ final class ChatServer {
                 sOutput.writeObject("Pong");
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+        }
+        private boolean writeMessage(String msg)
+        {
+            if(socket==null)
+            {
+                return false;
+            }
+            else
+            {
+                try {
+                    sOutput.writeObject(msg);
+                }
+                catch (IOException io)
+                {
+                    io.printStackTrace();
+                }
+                return true;
             }
         }
     }
