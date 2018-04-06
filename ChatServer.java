@@ -172,7 +172,7 @@ final class ChatServer {
         public void run() {
             // Read the username sent to you by client
             boolean running = true;
-            while (running) {
+            while (true) {
                 try {
                     cm = (ChatMessage) sInput.readObject();
                 } catch (IOException | ClassNotFoundException e) {
@@ -185,7 +185,8 @@ final class ChatServer {
                     for (ClientThread i : clients) {
                         if (i.username.equals(cm.getRecipeint())) {
                             i.writeMessage(this.username + "->" + i.username + ": " + cm.getMsg());
-                            System.out.println(this.username + "->" + i.username + ": " + cm.getMsg());
+                            this.writeMessage(this.username + "->" + i.username + ": " + cm.getMsg());
+                            System.out.println(dateFormat+this.username + "->" + i.username + ": " + cm.getMsg());
                             usernameExists = true;
                         }
                     }
