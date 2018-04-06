@@ -29,7 +29,6 @@ public class TicTacToeGame extends Thread{
         }
         this.turnCounter=0;
     }
-
     public int takeTurn(int index) {
         synchronized (lock) {
             if (turnCounter % 2 == 0) {
