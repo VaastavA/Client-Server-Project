@@ -146,7 +146,7 @@ final class ChatClient {
                 if(compare.startsWith("/logout"))
                 {
                     client.sendMessage(new ChatMessage(1,"",""));
-                    //implementing lougout left
+                    System.exit(0);
                 }
                 else if(input.startsWith("/msg"))
                 {

@@ -19,8 +19,6 @@ final class ChatServer {
     private final int port;            // port the server is hosted on
     private final Object lock1 = new Object();
     private final Object lock2 = new Object();
-    private  Date date = new Date();
-    private String dateFormat = new SimpleDateFormat("HH:mm:ss").format(date)+" ";
 
     /**
      * ChatServer constructor
@@ -37,10 +35,14 @@ final class ChatServer {
      */
     private void start() {
         try {
+            Date date = new Date();
+            String dateFormat = new SimpleDateFormat("HH:mm:ss").format(date)+" ";
 
             ServerSocket serverSocket = new ServerSocket(port);
             System.out.println( dateFormat+ "Server waiting for client on port " + port+".");
             while (true) {
+                date = new Date();
+                dateFormat = new SimpleDateFormat("HH:mm:ss").format(date)+" ";
                 Socket socket = serverSocket.accept();
                 Runnable r = new ClientThread(socket, uniqueId++);
                 Thread t = new Thread(r);
@@ -66,6 +68,8 @@ final class ChatServer {
                 i.writeMessage( message);
             }
         }
+        Date date = new Date();
+        String dateFormat = new SimpleDateFormat("HH:mm:ss").format(date)+" ";
         System.out.println(dateFormat+ message);
     }
 
@@ -124,16 +128,19 @@ final class ChatServer {
      */
     public static void main(String[] args) {
        ChatServer server = null;
-        if (args.length < 1) {
-            System.out.println("No port number");
-        }
+       int port = 1500;
+        if (args.length < 1) {}
         else {
-            server = new ChatServer(Integer.parseInt(args[0]));
-            server.start();
+            try{
+            port = Integer.parseInt(args[0]);
+            }
+            catch (NumberFormatException e)
+            {
+                System.out.println("Argument wasn't an integer to be port number.");
+            }
         }
-
-
-
+        server = new ChatServer(port);
+        server.start();
     }
 
 
@@ -173,6 +180,8 @@ final class ChatServer {
             // Read the username sent to you by client
             boolean running = true;
             while (true) {
+                Date date = new Date();
+                String dateFormat = new SimpleDateFormat("HH:mm:ss").format(date)+" ";
                 try {
                     cm = (ChatMessage) sInput.readObject();
                 } catch (IOException | ClassNotFoundException e) {
@@ -192,7 +201,7 @@ final class ChatServer {
                     }
                     if (!usernameExists) {
                         writeMessage("Username doesnot exist.");
-                        System.out.println("Username doesnot exist.");
+                        System.out.println(dateFormat+"Username doesnot exist.");
                     }
                 } else if (cm.getType() == ChatMessage.LOGOUT) {
                     remove(this.getId());
@@ -205,16 +214,68 @@ final class ChatServer {
                     }
                 } else if (cm.getType() == ChatMessage.TICTACTOE) {
                     boolean usernameExists = false;
+                    String user = null;
+                    boolean gameExists = false;
                     for (ClientThread i : clients) {
                         if (i.username.equals(cm.getRecipeint())) {
-                            i.writeMessage(username + ": " + cm.getMsg());
-                            System.out.println(username + ": " + cm.getMsg());
                             usernameExists = true;
+                            if (!cm.getMsg().matches("\\d+") || cm.getMsg() == "") {
+                                TicTacToeGame game = new TicTacToeGame(this.username, i.username);
+                                writeMessage("You started a TicTacToe game with " + i.username);
+                                i.writeMessage(this.username + " started a TicTacToe game with you");
+                                System.out.println(dateFormat + this.username + " started a TicTacToe game with " + i.username);
+                                games.add(game);
+                                user = i.username;
+                            } else if (cm.getMsg().matches("\\d+")) {
+                                for (TicTacToeGame ttt : games) {
+                                    boolean firstCase = (ttt.getPlayer1().equals(this.username) && ttt.getPlayer2().equals(i.username));
+                                    boolean secondCase = (ttt.getPlayer2().equals(this.username) && ttt.getPlayer1().equals(i.username));
+                                    if (firstCase || secondCase) {
+                                        gameExists = true;
+                                        usernameExists = true;
+                                        if (ttt.playerOneMove() && cm.getRecipeint().equals(ttt.getPlayer2()) && ttt.isValidMove(Integer.parseInt(cm.getMsg()))) {
+                                            ttt.takeTurn(Integer.parseInt(cm.getMsg()));
+                                            writeMessage(ttt.toString() + "\n" + "Game board with " + i.username);
+                                            i.writeMessage(ttt.toString() + "\n" + "Game board with " + this.username);
+                                        } else if (!ttt.playerOneMove() && cm.getRecipeint().equals(ttt.getPlayer1()) && ttt.isValidMove(Integer.parseInt(cm.getMsg()))) {
+                                            ttt.takeTurn(Integer.parseInt(cm.getMsg()));
+                                            writeMessage(ttt.toString() + "\n" + "Game board with " + i.username);
+                                            i.writeMessage(ttt.toString() + "\n" + "Game board with " + this.username);
+                                        } else {
+                                            writeMessage("Illegal Move");
+                                            System.out.println(dateFormat + "Illegal Move");
+                                        }
+                                        if (ttt.isGameOver()) {
+                                            if (ttt.isTied() == 1) {
+                                                writeMessage("Game Tied");
+                                                i.writeMessage("Game tied");
+                                                System.out.println(dateFormat + "Game Tied");
+                                            } else if (ttt.getWinner() != ' ') {
+                                                if (ttt.getWinner() == 'X') {
+                                                    writeMessage(this.username + " is the winner");
+                                                    i.writeMessage(this.username + " is the winner");
+                                                    System.out.println(dateFormat + this.username + " is the winner");
+                                                    games.remove(ttt);
+                                                } else if (ttt.getWinner() == 'O') {
+                                                    writeMessage(i.username + " is the winner");
+                                                    i.writeMessage(i.username + " is the winner");
+                                                    System.out.println(dateFormat + i.username + " is the winner");
+                                                    games.remove(ttt);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if (!gameExists) {
+                                    writeMessage("Initialize game first please");
+                                    System.out.println(dateFormat + "Initialize game first please");
+                                }
+                            }
                         }
-                    }
-                    if (!usernameExists) {
+
+                        }if (!usernameExists) {
                         writeMessage("Username doesnot exist.");
-                        System.out.println("Username doesnot exist.");
+                        System.out.println(dateFormat + "Username doesnot exist.");
                     }
                 }
 
@@ -224,6 +285,8 @@ final class ChatServer {
         }
 
         private boolean writeMessage(String msg) {
+            Date date = new Date();
+            String dateFormat = new SimpleDateFormat("HH:mm:ss").format(date)+" ";
             if (socket == null) {
                 return false;
             } else {

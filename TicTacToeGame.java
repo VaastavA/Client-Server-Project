@@ -19,8 +19,9 @@ public class TicTacToeGame extends Thread{
      */
 
     // TODO 4: Implement necessary methods to manage the games of Tic Tac Toe
-    public TicTacToeGame(String otherPlayer,boolean isX){
-        this.player2=otherPlayer;
+    public TicTacToeGame(String player1,String player2){
+        this.player1=player1;
+        this.player2=player2;
         this.gameBoard=new char[3][3];
         for(int i=0;i<3;i++){
             for(int j=0;j<3;j++){
@@ -29,6 +30,7 @@ public class TicTacToeGame extends Thread{
         }
         this.turnCounter=0;
     }
+
     public int takeTurn(int index) {
         synchronized (lock) {
             if (turnCounter % 2 == 0) {
@@ -139,7 +141,7 @@ public class TicTacToeGame extends Thread{
 
     }
 
-    public char getSpace(int index){
+    public boolean isValidMove(int index){
         char a=' ';
         switch (index){
             case 0:a=gameBoard[0][0];
@@ -153,19 +155,54 @@ public class TicTacToeGame extends Thread{
             case 8:a=gameBoard[2][2];
 
         }
-        return a;
-    }
-
-    public String toString(){
-        return gameBoard[0][0]+"|"+gameBoard[0][1]+"|"+gameBoard[0][2]+"\n"+"------"+"\n"+gameBoard[1][0]+'|'+gameBoard[1][1]+'|'+gameBoard[1][2]+'\n'+"------"+"\n"+gameBoard[2][0]+"|"+gameBoard[2][1]+"|"+gameBoard[2][2];
-
-    }
-
-    @Override
-    public void run() {
-        while (isTied()!=1 && getWinner()==SPACE)
+        if(a==SPACE)
         {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
 
+    }
+    public boolean playerOneMove()
+    {
+        if(getTurnCounter()%2==0) {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public int getTurnCounter() {
+        return turnCounter;
+    }
+
+    public String getPlayer1() {
+        return player1;
+    }
+
+    public String getPlayer2() {
+        return player2;
+    }
+
+    public String toString() {
+        synchronized (lock){
+        return "\n"+gameBoard[0][0] + "|" + gameBoard[0][1] + "|" + gameBoard[0][2] + "\n" + "------" + "\n" + gameBoard[1][0] + '|' + gameBoard[1][1] + '|' + gameBoard[1][2] + '\n' + "------" + "\n" + gameBoard[2][0] + "|" + gameBoard[2][1] + "|" + gameBoard[2][2];
+    }
+    }
+
+    public boolean isGameOver()
+    {
+        if(isTied()==1 || getWinner()==PLAYERO || getWinner()==PLAYERX)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 }
