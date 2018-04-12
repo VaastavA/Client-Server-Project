@@ -15,6 +15,7 @@ final class ChatServer {
     private static int uniqueId = 0;
     // Data structure to hold all of the connected clients
     private final List<ClientThread> clients = new ArrayList<>();
+    private final List<TicTacToeGame> games = new ArrayList<>();
     private final int port;            // port the server is hosted on
     private final Object lock1 = new Object();
     private final Object lock2 = new Object();
@@ -62,7 +63,7 @@ final class ChatServer {
     private void broadcast(String message) {
         for (ClientThread i : clients) {
             synchronized (lock1) {
-                i.writeMessage(dateFormat+ message);
+                i.writeMessage( message);
             }
         }
         System.out.println(dateFormat+ message);
@@ -132,6 +133,7 @@ final class ChatServer {
         }
 
 
+
     }
 
 
@@ -169,20 +171,54 @@ final class ChatServer {
         @Override
         public void run() {
             // Read the username sent to you by client
-	    // Type read implementation goes here
-            try {
-                cm = (ChatMessage) sInput.readObject();
-            } catch (IOException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-            System.out.println(username + ": Ping");
+            boolean running = true;
+            while (running) {
+                try {
+                    cm = (ChatMessage) sInput.readObject();
+                } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+                if (cm.getType() == ChatMessage.MESSAGE) {
+                    broadcast(username + ": " + cm.getMsg());
+                } else if (cm.getType() == ChatMessage.DM) {
+                    boolean usernameExists = false;
+                    for (ClientThread i : clients) {
+                        if (i.username.equals(cm.getRecipeint())) {
+                            i.writeMessage(this.username + "->" + i.username + ": " + cm.getMsg());
+                            System.out.println(this.username + "->" + i.username + ": " + cm.getMsg());
+                            usernameExists = true;
+                        }
+                    }
+                    if (!usernameExists) {
+                        writeMessage("Username doesnot exist.");
+                        System.out.println("Username doesnot exist.");
+                    }
+                } else if (cm.getType() == ChatMessage.LOGOUT) {
+                    remove(this.getId());
+                    running = false;
+                }else if (cm.getType() == ChatMessage.LIST) {
+                    for (ClientThread i : clients) {
+                        if (!i.username.equals(this.username)) {
+                            writeMessage(i.username + "\n");
+                        }
+                    }
+                } else if (cm.getType() == ChatMessage.TICTACTOE) {
+                    boolean usernameExists = false;
+                    for (ClientThread i : clients) {
+                        if (i.username.equals(cm.getRecipeint())) {
+                            i.writeMessage(username + ": " + cm.getMsg());
+                            System.out.println(username + ": " + cm.getMsg());
+                            usernameExists = true;
+                        }
+                    }
+                    if (!usernameExists) {
+                        writeMessage("Username doesnot exist.");
+                        System.out.println("Username doesnot exist.");
+                    }
+                }
 
 
-            // Send message back to the client
-            try {
-                sOutput.writeObject("Pong");
-            } catch (IOException e) {
-                e.printStackTrace();
+                // Send message back to the client
             }
         }
 
@@ -191,7 +227,7 @@ final class ChatServer {
                 return false;
             } else {
                 try {
-                    sOutput.writeObject(msg);
+                    sOutput.writeObject(dateFormat+msg+"\n");
                     sOutput.flush();
                 } catch (IOException io) {
                     io.printStackTrace();

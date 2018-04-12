@@ -88,6 +88,7 @@ final class ChatClient {
     private void sendMessage(ChatMessage msg) {
         try {
             sOutput.writeObject(msg);
+            sOutput.flush();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -109,11 +110,11 @@ final class ChatClient {
         // Get proper arguments and override defaults
         ChatClient client = null;
         String server = "localhost";
-        String username = null;
+        String username = "Anonymous";
         int port = 1500;
         if (args.length < 1)
         {
-            System.out.println("Need more ARGS");
+
         }
         if(args.length>0 && args[0]!=null)
         {
@@ -141,9 +142,11 @@ final class ChatClient {
             String input = s.nextLine();
             if(input.startsWith("/"))
             {
-                if(input.startsWith("/logout"))
+                String compare = input.toLowerCase();
+                if(compare.startsWith("/logout"))
                 {
                     client.sendMessage(new ChatMessage(1,"",""));
+                    //implementing lougout left
                 }
                 else if(input.startsWith("/msg"))
                 {
@@ -156,14 +159,20 @@ final class ChatClient {
                 }
                 else if (input.startsWith("/ttt"))
                 {
-                    String[] inputer = input.split(" ",2);
-                    client.sendMessage(new ChatMessage(4,"",inputer[1]));
+                    String turn = "";
+                    String[] inputer = input.split(" ");
+                    if(inputer.length>2)
+                    {
+                        turn = inputer[2];
+                    }
+                    client.sendMessage(new ChatMessage(4,turn,inputer[1]));
                 }
             }
             else
             {
                 client.sendMessage(new ChatMessage(0,input,""));
             }
+
         }
 
 
